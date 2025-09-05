@@ -60,15 +60,16 @@ Service providers follow a three-phase lifecycle:
 - `Application` - Main application class for bootstrapping
 - `Kernel` - Application kernel for service orchestration
 
+### Contracts
+- `ServiceProviderInterface` - Service provider contract
+  
 ### Services  
 - `ServiceProvider` - Abstract base service provider class
-- `ServiceProviderInterface` - Service provider contract
 - `ServiceManager` - Manages service provider lifecycle
 
 ### Support
 - `Container` - Enhanced DI container wrapper
 - `Exceptions` - Structured exception hierarchy
-- `Helpers` - Utility functions and type guards
 
 ## Development
 

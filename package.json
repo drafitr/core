@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "Core foundation for the Drafitr web framework - a highly opinionated TypeScript framework built on Bun and PostgreSQL",
   "license": "MIT",
+  "author": "liva Ramarolahy",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -61,5 +62,8 @@
   "homepage": "https://github.com/drafitr/core#readme",
   "engines": {
     "bun": ">=1.0.0"
+  },
+  "directories": {
+    "test": "tests"
   }
 }
