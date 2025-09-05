@@ -1,0 +1,65 @@
+{
+  "name": "@drafitr/core",
+  "version": "0.1.0",
+  "description": "Core foundation for the Drafitr web framework - a highly opinionated TypeScript framework built on Bun and PostgreSQL",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist/**/*"
+  ],
+  "scripts": {
+    "build": "bun build src/index.ts --outdir=dist --target=bun --format=esm",
+    "dev": "bun --watch src/index.ts",
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "eslint src/**/*.ts --fix",
+    "format": "prettier --write src/**/*.ts",
+    "prepublishOnly": "bun run build"
+  },
+  "dependencies": {
+    "@needle-di/core": "^1.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.34.0",
+    "@types/bun": "latest",
+    "bun-types": "latest",
+    "eslint": "^9.34.0",
+    "eslint-plugin-prettier": "^5.5.4",
+    "prettier": "^3.6.2",
+    "typescript": "^5.0.0",
+    "typescript-eslint": "^8.41.0"
+  },
+  "peerDependencies": {
+    "bun": ">=1.0.0"
+  },
+  "keywords": [
+    "framework",
+    "typescript",
+    "bun",
+    "service-oriented",
+    "dependency-injection",
+    "postgresql",
+    "web-framework"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/drafitr/core.git"
+  },
+  "bugs": {
+    "url": "https://github.com/drafitr/core/issues"
+  },
+  "homepage": "https://github.com/drafitr/core#readme",
+  "engines": {
+    "bun": ">=1.0.0"
+  }
+}
