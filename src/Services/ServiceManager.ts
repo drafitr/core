@@ -36,7 +36,7 @@ export class ServiceManager {
   // Boot all registered providers that have a boot method
   public async bootAll(): Promise<void> {
     const sortedProviders = this.topologicalSort(this.registeredProviders, false)
-    
+
     for (const provider of sortedProviders) {
       if (provider.boot) {
         await provider.boot(this.container)
@@ -79,7 +79,7 @@ export class ServiceManager {
     }
 
     let name: string
-    
+
     if (provider.getProviderName) {
       name = provider.getProviderName()
     } else {
@@ -92,7 +92,7 @@ export class ServiceManager {
         name = `AnonymousProvider_${++this.nameCounter}`
       }
     }
-    
+
     // Store the name for this provider instance
     this.providerNames.set(provider, name)
     return name
@@ -109,14 +109,17 @@ export class ServiceManager {
   }
 
   // Topological sort for dependency resolution
-  private topologicalSort(providers: IServiceProvider[], reverse: boolean = false): IServiceProvider[] {
+  private topologicalSort(
+    providers: IServiceProvider[],
+    reverse: boolean = false
+  ): IServiceProvider[] {
     if (providers.length === 0) {
       return []
     }
 
     // Get normal boot order first
     const bootOrder = this.getBootOrder(providers)
-    
+
     // Return normal order for boot, reverse for shutdown
     return reverse ? [...bootOrder].reverse() : bootOrder
   }
@@ -134,7 +137,7 @@ export class ServiceManager {
       graph.set(name, provider)
       inDegree.set(name, 0)
       adjList.set(name, [])
-      
+
       // Map services to their providers
       const providedServices = this.getProvidedServices(provider)
       for (const service of providedServices) {
@@ -152,16 +155,18 @@ export class ServiceManager {
       for (const depToken of dependencies) {
         const depTokenKey = this.getTokenKey(depToken)
         const depProviderName = serviceToProvider.get(depTokenKey)
-        
+
         if (!depProviderName) {
-          throw new Error(`Service provider '${providerName}' depends on service '${depTokenKey}', but no provider provides this service`)
+          throw new Error(
+            `Service provider '${providerName}' depends on service '${depTokenKey}', but no provider provides this service`
+          )
         }
-        
+
         // Don't create self-dependencies
         if (depProviderName === providerName) {
           continue
         }
-        
+
         // Dependency points to dependent
         adjList.get(depProviderName)!.push(providerName)
         inDegree.set(providerName, inDegree.get(providerName)! + 1)
@@ -188,7 +193,7 @@ export class ServiceManager {
       for (const neighbor of adjList.get(current)!) {
         const newDegree = inDegree.get(neighbor)! - 1
         inDegree.set(neighbor, newDegree)
-        
+
         if (newDegree === 0) {
           queue.push(neighbor)
         }
@@ -197,9 +202,11 @@ export class ServiceManager {
 
     // Check for circular dependencies
     if (result.length !== providers.length) {
-      const remaining = providers.filter(p => !result.includes(p))
-      const remainingNames = remaining.map(p => this.getProviderName(p))
-      throw new Error(`Circular dependency detected among service providers: ${remainingNames.join(', ')}`)
+      const remaining = providers.filter((p) => !result.includes(p))
+      const remainingNames = remaining.map((p) => this.getProviderName(p))
+      throw new Error(
+        `Circular dependency detected among service providers: ${remainingNames.join(', ')}`
+      )
     }
 
     return result
@@ -207,7 +214,7 @@ export class ServiceManager {
 
   // Helper method to get a consistent string key for tokens
   private getTokenKey(token: Token<any>): string {
-    // Tokens have a description property that can be used as a key
-    return token.description || token.toString()
+    const description = (token as any)?.description
+    return typeof description === 'string' ? description : token.toString()
   }
 }
