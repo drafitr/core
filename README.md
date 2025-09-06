@@ -1,6 +1,6 @@
 # @drafitr/core
 
-Core foundation for the Drafitr web framework - a highly opinionated TypeScript framework built on Bun and PostgreSQL.
+Core foundation for the Drafitr web framework - a highly opinionated TypeScript framework for building web applications and APIs.
 
 ## Etymology
 
