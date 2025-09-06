@@ -68,7 +68,7 @@ Service providers follow a three-phase lifecycle:
 - `Kernel` - Application kernel for service orchestration
 
 ### Contracts
-- `ServiceProviderInterface` - Service provider contract
+- `IServiceProvider` - Service provider contract
   
 ### Services  
 - `ServiceProvider` - Abstract base service provider class
@@ -96,12 +96,12 @@ bun run build
 
 ## Related Packages
 
-- `@drafitr/http` - HTTP service (Request, Response, Middleware)
 - `@drafitr/config` - Configuration management service
 - `@drafitr/logging` - Logging service
+- `@drafitr/http` - HTTP service (Request, Response, Middleware)
 - `@drafitr/events` - Event dispatcher service
-- `@drafitr/db` - Database utilities and migrations
-- `@drafitr/orm` - PostgreSQL ORM
+- `@drafitr/database` - Database utilities and migrations
+- `@drafitr/postgres` - PostgreSQL ORM
 - `@drafitr/auth` - Authentication service
 - `@drafitr/cli` - Command line interface
 

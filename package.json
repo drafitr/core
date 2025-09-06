@@ -1,7 +1,7 @@
 {
   "name": "@drafitr/core",
   "version": "0.1.0",
-  "description": "Core foundation for the Drafitr web framework - a highly opinionated TypeScript framework built on Bun and PostgreSQL",
+  "description": "Core foundation for the Drafitr - a highly opinionated TypeScript framework for building web applications and APIs.",
   "license": "MIT",
   "author": "liva Ramarolahy",
   "type": "module",
