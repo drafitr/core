@@ -14,4 +14,10 @@ export abstract class ServiceProvider implements ServiceProviderInterface {
 
   // Optional method called during application shutdown
   public shutdown?(container: Container): Promise<void> | void
+
+  // Optional method to declare dependencies on other service providers
+  public getDependencies?(): string[]
+
+  // Optional method to provide a unique identifier for this service provider
+  public getProviderName?(): string
 }

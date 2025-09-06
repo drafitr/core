@@ -11,4 +11,8 @@ export interface ServiceProviderInterface {
   boot?(container: Container): Promise<void> | void
   // Optional method called during graceful shutdown
   shutdown?(container: Container): Promise<void> | void
+  // Optional method to declare dependencies on other service providers
+  getDependencies?(): string[]
+  // Optional method to provide a unique identifier for this service provider
+  getProviderName?(): string
 }
