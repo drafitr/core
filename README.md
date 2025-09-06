@@ -23,27 +23,34 @@ bun install @drafitr/core
 ## Quick Start
 
 ```typescript
-import { Application, ServiceProvider } from '@drafitr/core';
-import { Container } from '@needle-di/core';
+import { Application, ServiceProvider, Container } from '@drafitr/core'
+import { InjectionToken } from '@needle-di/core'
+
+const HELLO_SERVICE = new InjectionToken<HelloService>('HelloService')
+
+// A hello service class
+class HelloService {
+  sayIt() {
+    console.log('Hello, Dependency Injection!')
+  }
+}
 
 // Create a simple service provider
-class MyServiceProvider extends ServiceProvider {
+class HelloServiceProvider extends ServiceProvider {
   register(container: Container): void {
-    container.bind('myService').toConstantValue({
-      sayHello: () => console.log('Hello from Drafitr!')
-    });
+    container.bindClass(HELLO_SERVICE, HelloService)
   }
 
   boot(container: Container): void {
-    const service = container.resolve('myService');
-    service.sayHello();
+    const service = container.resolve(HELLO_SERVICE)
+    service.sayIt()
   }
 }
 
 // Bootstrap and run the application
-const app = new Application();
-app.register(new MyServiceProvider());
-await app.run();
+const app = new Application()
+app.register(new HelloServiceProvider())
+await app.run()
 ```
 
 ## Service Provider Lifecycle
