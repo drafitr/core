@@ -1,5 +1,5 @@
 import { Application } from './Application'
-import { ServiceProviderInterface } from '../Contracts/ServiceProviderInterface'
+import { IServiceProvider } from '../Contracts/IServiceProvider'
 
 /**
  * Application kernel that orchestrates the application startup process
@@ -7,10 +7,10 @@ import { ServiceProviderInterface } from '../Contracts/ServiceProviderInterface'
  */
 export class Kernel {
   private application: Application
-  private serviceProviders: ServiceProviderInterface[] = []
+  private serviceProviders: IServiceProvider[] = []
 
   // Initialize kernel with optional service providers
-  constructor(serviceProviders: ServiceProviderInterface[] = []) {
+  constructor(serviceProviders: IServiceProvider[] = []) {
     this.application = new Application()
     this.serviceProviders = serviceProviders
   }
@@ -21,7 +21,7 @@ export class Kernel {
   }
 
   // Register a new service provider with the kernel
-  public registerServiceProvider(serviceProvider: ServiceProviderInterface): this {
+  public registerServiceProvider(serviceProvider: IServiceProvider): this {
     this.serviceProviders.push(serviceProvider)
     return this
   }

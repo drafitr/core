@@ -1,6 +1,6 @@
 import { Container } from '../Support/Container'
 import { ServiceManager } from '../Services/ServiceManager'
-import { ServiceProviderInterface } from '../Contracts/ServiceProviderInterface'
+import { IServiceProvider } from '../Contracts/IServiceProvider'
 
 /**
  * Main application class that manages the application lifecycle
@@ -29,7 +29,7 @@ export class Application {
   }
 
   // Register a service provider with the application
-  public register(serviceProvider: ServiceProviderInterface): this {
+  public register(serviceProvider: IServiceProvider): this {
     this.serviceManager.register(serviceProvider)
     return this
   }

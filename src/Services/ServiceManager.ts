@@ -1,5 +1,6 @@
 import { Container } from '../Support/Container'
-import { ServiceProviderInterface } from '../Contracts/ServiceProviderInterface'
+import { IServiceProvider } from '../Contracts/IServiceProvider'
+import type { Token } from '@needle-di/core'
 
 /**
  * Service manager that handles registration, booting, and shutdown of service providers
@@ -7,11 +8,12 @@ import { ServiceProviderInterface } from '../Contracts/ServiceProviderInterface'
  */
 export class ServiceManager {
   private container: Container
-  private providers: ServiceProviderInterface[] = []
-  private registeredProviders: ServiceProviderInterface[] = []
-  private bootedProviders: ServiceProviderInterface[] = []
-  private providerNames = new WeakMap<ServiceProviderInterface, string>()
+  private providers: IServiceProvider[] = []
+  private registeredProviders: IServiceProvider[] = []
+  private bootedProviders: IServiceProvider[] = []
+  private providerNames = new WeakMap<IServiceProvider, string>()
   private nameCounter = 0
+  private serviceProviders = new Map<string, IServiceProvider>()
 
   // Initialize service manager with dependency injection container
   constructor(container: Container) {
@@ -19,7 +21,7 @@ export class ServiceManager {
   }
 
   // Add a service provider to the list of providers to register
-  public register(provider: ServiceProviderInterface): void {
+  public register(provider: IServiceProvider): void {
     this.providers.push(provider)
   }
 
@@ -60,17 +62,17 @@ export class ServiceManager {
   }
 
   // Get a copy of all registered service providers
-  public getRegisteredProviders(): ServiceProviderInterface[] {
+  public getRegisteredProviders(): IServiceProvider[] {
     return [...this.registeredProviders]
   }
 
   // Get a copy of all booted service providers
-  public getBootedProviders(): ServiceProviderInterface[] {
+  public getBootedProviders(): IServiceProvider[] {
     return [...this.bootedProviders]
   }
 
   // Get provider name for dependency resolution
-  private getProviderName(provider: ServiceProviderInterface): string {
+  private getProviderName(provider: IServiceProvider): string {
     // Check if we already assigned a name to this provider
     if (this.providerNames.has(provider)) {
       return this.providerNames.get(provider)!
@@ -97,12 +99,17 @@ export class ServiceManager {
   }
 
   // Get provider dependencies for dependency resolution
-  private getProviderDependencies(provider: ServiceProviderInterface): string[] {
+  private getProviderDependencies(provider: IServiceProvider): Token<any>[] {
     return provider.getDependencies?.() || []
   }
 
+  // Get services provided by a provider
+  private getProvidedServices(provider: IServiceProvider): Token<any>[] {
+    return provider.getProvidedServices?.() || []
+  }
+
   // Topological sort for dependency resolution
-  private topologicalSort(providers: ServiceProviderInterface[], reverse: boolean = false): ServiceProviderInterface[] {
+  private topologicalSort(providers: IServiceProvider[], reverse: boolean = false): IServiceProvider[] {
     if (providers.length === 0) {
       return []
     }
@@ -115,17 +122,25 @@ export class ServiceManager {
   }
 
   // Get boot order using topological sort
-  private getBootOrder(providers: ServiceProviderInterface[]): ServiceProviderInterface[] {
-    const graph = new Map<string, ServiceProviderInterface>()
+  private getBootOrder(providers: IServiceProvider[]): IServiceProvider[] {
+    const graph = new Map<string, IServiceProvider>()
     const inDegree = new Map<string, number>()
     const adjList = new Map<string, string[]>()
+    const serviceToProvider = new Map<string, string>()
 
-    // Build the graph
+    // Build the graph and service mapping
     for (const provider of providers) {
       const name = this.getProviderName(provider)
       graph.set(name, provider)
       inDegree.set(name, 0)
       adjList.set(name, [])
+      
+      // Map services to their providers
+      const providedServices = this.getProvidedServices(provider)
+      for (const service of providedServices) {
+        const tokenKey = this.getTokenKey(service)
+        serviceToProvider.set(tokenKey, name)
+      }
     }
 
     // Build adjacency list and calculate in-degrees
@@ -134,20 +149,28 @@ export class ServiceManager {
       const providerName = this.getProviderName(provider)
       const dependencies = this.getProviderDependencies(provider)
 
-      for (const depName of dependencies) {
-        if (!graph.has(depName)) {
-          throw new Error(`Service provider '${providerName}' depends on '${depName}', but '${depName}' is not registered`)
+      for (const depToken of dependencies) {
+        const depTokenKey = this.getTokenKey(depToken)
+        const depProviderName = serviceToProvider.get(depTokenKey)
+        
+        if (!depProviderName) {
+          throw new Error(`Service provider '${providerName}' depends on service '${depTokenKey}', but no provider provides this service`)
+        }
+        
+        // Don't create self-dependencies
+        if (depProviderName === providerName) {
+          continue
         }
         
         // Dependency points to dependent
-        adjList.get(depName)!.push(providerName)
+        adjList.get(depProviderName)!.push(providerName)
         inDegree.set(providerName, inDegree.get(providerName)! + 1)
       }
     }
 
     // Kahn's algorithm for topological sorting
     const queue: string[] = []
-    const result: ServiceProviderInterface[] = []
+    const result: IServiceProvider[] = []
 
     // Find all nodes with no incoming edges (no dependencies)
     for (const [name, degree] of inDegree) {
@@ -180,5 +203,11 @@ export class ServiceManager {
     }
 
     return result
+  }
+
+  // Helper method to get a consistent string key for tokens
+  private getTokenKey(token: Token<any>): string {
+    // Tokens have a description property that can be used as a key
+    return token.description || token.toString()
   }
 }

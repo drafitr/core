@@ -2,6 +2,8 @@ import { test, expect, describe, beforeEach } from 'bun:test'
 import { ServiceManager } from '../../src/Services/ServiceManager'
 import { ServiceProvider } from '../../src/Services/ServiceProvider'
 import { Container } from '../../src/Support/Container'
+import { InjectionToken } from '@needle-di/core'
+import type { Token } from '@needle-di/core'
 
 describe('ServiceManager', () => {
   let container: Container
@@ -131,30 +133,37 @@ describe('ServiceManager', () => {
   test('should boot providers in dependency order', async () => {
     const bootOrder: string[] = []
 
-    // Database provider - no dependencies
+    // Define service tokens
+    const DATABASE_SERVICE = new InjectionToken<any>('DatabaseService')
+    const CACHE_SERVICE = new InjectionToken<any>('CacheService')
+
+    // Database provider - provides database service, no dependencies
     const databaseProvider = new (class extends ServiceProvider {
       getProviderName(): string { return 'DatabaseProvider' }
-      getDependencies(): string[] { return [] }
+      getProvidedServices(): Token<any>[] { return [DATABASE_SERVICE] }
+      getDependencies(): Token<any>[] { return [] }
       register(): void {}
       boot(): void {
         bootOrder.push('Database')
       }
     })()
 
-    // Cache provider - depends on Database
+    // Cache provider - provides cache service, depends on database service
     const cacheProvider = new (class extends ServiceProvider {
       getProviderName(): string { return 'CacheProvider' }
-      getDependencies(): string[] { return ['DatabaseProvider'] }
+      getProvidedServices(): Token<any>[] { return [CACHE_SERVICE] }
+      getDependencies(): Token<any>[] { return [DATABASE_SERVICE] }
       register(): void {}
       boot(): void {
         bootOrder.push('Cache')
       }
     })()
 
-    // Web provider - depends on both Database and Cache
+    // Web provider - depends on both database and cache services
     const webProvider = new (class extends ServiceProvider {
       getProviderName(): string { return 'WebProvider' }
-      getDependencies(): string[] { return ['DatabaseProvider', 'CacheProvider'] }
+      getProvidedServices(): Token<any>[] { return [] }
+      getDependencies(): Token<any>[] { return [DATABASE_SERVICE, CACHE_SERVICE] }
       register(): void {}
       boot(): void {
         bootOrder.push('Web')
@@ -174,10 +183,15 @@ describe('ServiceManager', () => {
   test('should shutdown providers in reverse dependency order', async () => {
     const shutdownOrder: string[] = []
 
-    // Database provider - no dependencies
+    // Define service tokens
+    const DATABASE_SERVICE = new InjectionToken<any>('DatabaseService')
+    const CACHE_SERVICE = new InjectionToken<any>('CacheService')
+
+    // Database provider - provides database service, no dependencies
     const databaseProvider = new (class extends ServiceProvider {
       getProviderName(): string { return 'DatabaseProvider' }
-      getDependencies(): string[] { return [] }
+      getProvidedServices(): Token<any>[] { return [DATABASE_SERVICE] }
+      getDependencies(): Token<any>[] { return [] }
       register(): void {}
       boot(): void {}
       shutdown(): void {
@@ -185,10 +199,11 @@ describe('ServiceManager', () => {
       }
     })()
 
-    // Cache provider - depends on Database
+    // Cache provider - provides cache service, depends on database service
     const cacheProvider = new (class extends ServiceProvider {
       getProviderName(): string { return 'CacheProvider' }
-      getDependencies(): string[] { return ['DatabaseProvider'] }
+      getProvidedServices(): Token<any>[] { return [CACHE_SERVICE] }
+      getDependencies(): Token<any>[] { return [DATABASE_SERVICE] }
       register(): void {}
       boot(): void {}
       shutdown(): void {
@@ -196,10 +211,11 @@ describe('ServiceManager', () => {
       }
     })()
 
-    // Web provider - depends on both Database and Cache
+    // Web provider - depends on both database and cache services
     const webProvider = new (class extends ServiceProvider {
       getProviderName(): string { return 'WebProvider' }
-      getDependencies(): string[] { return ['DatabaseProvider', 'CacheProvider'] }
+      getProvidedServices(): Token<any>[] { return [] }
+      getDependencies(): Token<any>[] { return [DATABASE_SERVICE, CACHE_SERVICE] }
       register(): void {}
       boot(): void {}
       shutdown(): void {
@@ -245,9 +261,12 @@ describe('ServiceManager', () => {
   })
 
   test('should throw error for missing dependencies', async () => {
+    const NONEXISTENT_SERVICE = new InjectionToken<any>('NonExistentService')
+
     const provider = new (class extends ServiceProvider {
       getProviderName(): string { return 'TestProvider' }
-      getDependencies(): string[] { return ['NonExistentProvider'] }
+      getProvidedServices(): Token<any>[] { return [] }
+      getDependencies(): Token<any>[] { return [NONEXISTENT_SERVICE] }
       register(): void {}
       boot(): void {}
     })()
@@ -256,21 +275,26 @@ describe('ServiceManager', () => {
     await serviceManager.registerAll()
 
     await expect(serviceManager.bootAll()).rejects.toThrow(
-      "Service provider 'TestProvider' depends on 'NonExistentProvider', but 'NonExistentProvider' is not registered"
+      "Service provider 'TestProvider' depends on service 'NonExistentService', but no provider provides this service"
     )
   })
 
   test('should throw error for circular dependencies', async () => {
+    const SERVICE_A = new InjectionToken<any>('ServiceA')
+    const SERVICE_B = new InjectionToken<any>('ServiceB')
+
     const providerA = new (class extends ServiceProvider {
       getProviderName(): string { return 'ProviderA' }
-      getDependencies(): string[] { return ['ProviderB'] }
+      getProvidedServices(): Token<any>[] { return [SERVICE_A] }
+      getDependencies(): Token<any>[] { return [SERVICE_B] }
       register(): void {}
       boot(): void {}
     })()
 
     const providerB = new (class extends ServiceProvider {
       getProviderName(): string { return 'ProviderB' }
-      getDependencies(): string[] { return ['ProviderA'] }
+      getProvidedServices(): Token<any>[] { return [SERVICE_B] }
+      getDependencies(): Token<any>[] { return [SERVICE_A] }
       register(): void {}
       boot(): void {}
     })()
@@ -286,8 +310,12 @@ describe('ServiceManager', () => {
 
   test('should use constructor name when provider name is not specified', async () => {
     const bootOrder: string[] = []
+    
+    const DATABASE_SERVICE = new InjectionToken<any>('DatabaseService')
 
     class DatabaseService extends ServiceProvider {
+      getProvidedServices(): Token<any>[] { return [DATABASE_SERVICE] }
+      getDependencies(): Token<any>[] { return [] }
       register(): void {}
       boot(): void {
         bootOrder.push('DatabaseService')
@@ -295,7 +323,8 @@ describe('ServiceManager', () => {
     }
 
     class WebService extends ServiceProvider {
-      getDependencies(): string[] { return ['DatabaseService'] }
+      getProvidedServices(): Token<any>[] { return [] }
+      getDependencies(): Token<any>[] { return [DATABASE_SERVICE] }
       register(): void {}
       boot(): void {
         bootOrder.push('WebService')
